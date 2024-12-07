@@ -25,6 +25,7 @@ type VoiceContextType = {
   unmute: () => void;
   micFft: number[];
   messages: Message[];
+  isProcessing: boolean;
 };
 
 const VoiceContext = createContext<VoiceContextType | null>(null);
@@ -52,6 +53,7 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
   const [isMuted, setIsMuted] = useState(false);
   const [micFft, setMicFft] = useState<number[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
 
@@ -168,6 +170,7 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
     }
 
     try {
+      setIsProcessing(true);
       // Convert audio data to WAV format with proper headers
       const wavBuffer = new ArrayBuffer(44 + audioData.length * 2);
       const view = new DataView(wavBuffer);
@@ -224,8 +227,8 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       const result = await response.json();
       
       if (result.text && result.text.trim()) {
-        setMessages(prev => [...prev, {
-          type: 'user_message',
+        const userMessage = {
+          type: 'user_message' as const,
           message: {
             role: 'user',
             content: result.text.trim()
@@ -235,13 +238,33 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
               scores: {} // You would get this from your prosody analysis
             }
           }
-        }]);
+        };
+        
+        setMessages(prev => [...prev, userMessage]);
         onMessage?.(result.text.trim());
+        
+        // Simulate assistant response after user message
+        setTimeout(() => {
+          const assistantMessage = {
+            type: 'assistant_message' as const,
+            message: {
+              role: 'assistant',
+              content: 'I heard what you said. How can I help you with that?'
+            },
+            models: {
+              prosody: {
+                scores: {}
+              }
+            }
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+        }, 1000);
       }
-
     } catch (error) {
       console.error('Error sending audio:', error);
       onError?.(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setIsProcessing(false);
     }
   }, [status.value, auth.value, onMessage, onError]);
 
@@ -255,7 +278,8 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       mute,
       unmute,
       micFft,
-      messages
+      messages,
+      isProcessing
     }}>
       {children}
     </VoiceContext.Provider>

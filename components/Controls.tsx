@@ -8,7 +8,7 @@ import MicFFT from "./MicFFT";
 import { cn } from "@/utils";
 
 export default function Controls() {
-  const { disconnect, status, isMuted, unmute, mute, micFft } = useVoice();
+  const { disconnect, status, isMuted, unmute, mute, micFft, isProcessing } = useVoice();
 
   return (
     <div
@@ -47,16 +47,24 @@ export default function Controls() {
                   mute();
                 }
               }}
+              className={cn(
+                isProcessing && !isMuted && "animate-pulse ring-2 ring-primary"
+              )}
             >
               {isMuted ? (
                 <MicOff className={"size-4"} />
               ) : (
-                <Mic className={"size-4"} />
+                <Mic className={cn("size-4", isProcessing && "text-primary")} />
               )}
             </Toggle>
 
             <div className={"relative grid h-8 w-48 shrink grow-0"}>
-              <MicFFT fft={micFft} className={"fill-current"} />
+              <MicFFT fft={micFft} className={cn("fill-current", isProcessing && "fill-primary")} />
+              {isProcessing && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs text-primary animate-pulse">Processing...</span>
+                </div>
+              )}
             </div>
 
             <Button
