@@ -29,10 +29,15 @@ export default function Controls() {
         await window.activeAudioContext.close();
       }
 
-      // Force a hard refresh of the page
-      window.location.href = window.location.href;
+      // Force an immediate and complete page reload
+      window.location.replace(window.location.href);
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 100);
     } catch (error) {
       console.error('Error ending call:', error);
+      // Force reload even if there's an error
+      window.location.reload(true);
     }
   }, [disconnect]);
 
