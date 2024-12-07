@@ -1,68 +1,40 @@
 "use client";
-import { expressionColors, isExpressionColor } from "@/utils/expressionColors";
-import { expressionLabels } from "@/utils/expressionLabels";
-import { motion } from "framer-motion";
-import { CSSProperties } from "react";
-import * as R from "remeda";
+
+import { cn } from "@/utils";
+
+type EmotionScore = {
+  label: string;
+  score: number;
+};
 
 export default function Expressions({
-  values,
+  values = {},
 }: {
-  values: Record<string, number>;
+  values?: Record<string, number>;
 }) {
-  const top3 = R.pipe(
-    values,
-    R.entries(),
-    R.sortBy(R.pathOr([1], 0)),
-    R.reverse(),
-    R.take(3)
-  );
+  // Filter out low scores and sort by score
+  const significantEmotions = Object.entries(values)
+    .filter(([_, score]) => score > 0.1)
+    .sort(([_, a], [_, b]) => b - a)
+    .slice(0, 3)
+    .map(([label, score]) => ({
+      label,
+      score,
+    }));
+
+  if (significantEmotions.length === 0) return null;
 
   return (
-    <div
-      className={
-        "text-xs p-3 w-full border-t border-border flex flex-col md:flex-row gap-3"
-      }
-    >
-      {top3.map(([key, value]) => (
-        <div key={key} className={"w-full overflow-hidden"}>
-          <div
-            className={"flex items-center justify-between gap-1 font-mono pb-1"}
-          >
-            <div className={"font-medium truncate"}>
-              {expressionLabels[key]}
-            </div>
-            <div className={"tabular-nums opacity-50"}>{value.toFixed(2)}</div>
-          </div>
-          <div
-            className={"relative h-1"}
-            style={
-              {
-                "--bg": isExpressionColor(key)
-                  ? expressionColors[key]
-                  : "var(--bg)",
-              } as CSSProperties
-            }
-          >
-            <div
-              className={
-                "absolute top-0 left-0 size-full rounded-full opacity-10 bg-[var(--bg)]"
-              }
-            />
-            <motion.div
-              className={
-                "absolute top-0 left-0 h-full bg-[var(--bg)] rounded-full"
-              }
-              initial={{ width: 0 }}
-              animate={{
-                width: `${R.pipe(
-                  value,
-                  R.clamp({ min: 0, max: 1 }),
-                  (value) => `${value * 100}%`
-                )}`,
-              }}
-            />
-          </div>
+    <div className="flex flex-wrap gap-1 px-3 pb-3">
+      {significantEmotions.map(({ label, score }) => (
+        <div
+          key={label}
+          className={cn(
+            "px-2 py-0.5 text-xs rounded-full",
+            "bg-primary/10 text-primary-foreground/50"
+          )}
+        >
+          {label} ({Math.round(score * 100)}%)
         </div>
       ))}
     </div>

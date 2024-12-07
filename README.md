@@ -1,25 +1,31 @@
-<div align="center">
-  <img src="https://storage.googleapis.com/hume-public-logos/hume/hume-banner.png">
-  <h1>EVI Next.js App Router Example</h1>
-</div>
+# Real-time Voice Chat AI
 
-![preview.png](preview.png)
+A real-time voice chat application that uses state-of-the-art AI models for speech recognition, emotion analysis, and natural conversation.
 
-## Overview
+## Features
 
-This project features a sample implementation of Hume's [Empathic Voice Interface](https://hume.docs.buildwithfern.com/docs/empathic-voice-interface-evi/overview) using Hume's React SDK. Here, we have a simple EVI that uses the Next.js App Router.
+- Real-time speech-to-text using Whisper Large v3
+- Emotion detection using RoBERTa emotion classifier
+- Natural conversation using Mixtral-8x7B
+- Dynamic message display with emotional context
+- Real-time audio visualization
 
 ## Project deployment
 
-Click the button below to deploy this example project with Vercel:
+Click the button below to deploy this project with Vercel:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhumeai%2Fhume-evi-next-js-starter&env=HUME_API_KEY,HUME_SECRET_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
 
-Below are the steps to completing deployment:
+Required environment variables:
+- `HUGGINGFACE_API_KEY`: Your Hugging Face API key for model inference
 
-1. Create a Git Repository for your project.
-2. Provide the required environment variables. To get your API key and Client Secret key, log into the portal and visit the [API keys page](https://beta.hume.ai/settings/keys).
+## Development
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Create a `.env.local` file with your Hugging Face API key
+4. Run the development server: `npm run dev`
 
 ## Support
 
-If you have questions, require assistance, or wish to engage in discussions pertaining to this starter template, [please reach out to us on Discord](https://link.hume.ai/discord).
+For questions or assistance, please open an issue in the repository.

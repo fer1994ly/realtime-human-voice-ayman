@@ -1,5 +1,36 @@
 import React, { createContext, useContext, useCallback, useState, useRef } from 'react';
 
+type EmotionScores = {
+  admiration: number;
+  amusement: number;
+  anger: number;
+  annoyance: number;
+  approval: number;
+  caring: number;
+  confusion: number;
+  curiosity: number;
+  desire: number;
+  disappointment: number;
+  disapproval: number;
+  disgust: number;
+  embarrassment: number;
+  excitement: number;
+  fear: number;
+  gratitude: number;
+  grief: number;
+  joy: number;
+  love: number;
+  nervousness: number;
+  optimism: number;
+  pride: number;
+  realization: number;
+  relief: number;
+  remorse: number;
+  sadness: number;
+  surprise: number;
+  neutral: number;
+};
+
 type Message = {
   type: 'user_message' | 'assistant_message';
   message: {
@@ -7,8 +38,8 @@ type Message = {
     content: string;
   };
   models: {
-    prosody?: {
-      scores: Record<string, number>;
+    emotion?: {
+      scores: Partial<EmotionScores>;
     };
   };
 };
@@ -164,6 +195,72 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
     }
   }, []);
 
+  const analyzeEmotion = async (text: string) => {
+    try {
+      const response = await fetch('https://api-inference.huggingface.co/models/SamLowe/roberta-base-go_emotions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${auth.value}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: text })
+      });
+
+      if (!response.ok) {
+        throw new Error('Emotion analysis failed');
+      }
+
+      const result = await response.json();
+      const emotions: Partial<EmotionScores> = {};
+      
+      result[0].forEach(({ label, score }: { label: string; score: number }) => {
+        emotions[label as keyof EmotionScores] = score;
+      });
+
+      return emotions;
+    } catch (error) {
+      console.error('Emotion analysis error:', error);
+      return {};
+    }
+  };
+
+  const getAssistantResponse = async (userMessage: string, emotions: Partial<EmotionScores>) => {
+    try {
+      // Create a prompt that includes emotional context
+      const dominantEmotion = Object.entries(emotions)
+        .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+      
+      const prompt = `[User's message (emotion: ${dominantEmotion})]: ${userMessage}\n[Assistant: Respond empathetically and naturally]`;
+
+      const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${auth.value}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 150,
+            temperature: 0.7,
+            top_p: 0.95,
+            repetition_penalty: 1.15
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Assistant response failed');
+      }
+
+      const result = await response.json();
+      return result[0].generated_text.trim();
+    } catch (error) {
+      console.error('Assistant response error:', error);
+      return "I apologize, but I'm having trouble processing your message right now.";
+    }
+  };
+
   const sendAudio = useCallback(async (audioData: Float32Array) => {
     if (status.value !== 'connected') {
       throw new Error('Not connected');
@@ -211,7 +308,7 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       const formData = new FormData();
       formData.append('audio', new Blob([wavBuffer], { type: 'audio/wav' }), 'audio.wav');
 
-      // Send to Hugging Face endpoint
+      // Send to Whisper for transcription
       const response = await fetch('https://api-inference.huggingface.co/models/openai/whisper-large-v3', {
         method: 'POST',
         headers: {
@@ -221,47 +318,53 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       });
 
       if (!response.ok) {
-        throw new Error(`Hugging Face API error: ${response.statusText}`);
+        throw new Error(`Transcription error: ${response.statusText}`);
       }
 
       const result = await response.json();
       
       if (result.text && result.text.trim()) {
+        const userText = result.text.trim();
+        
+        // Analyze emotion
+        const emotions = await analyzeEmotion(userText);
+        
+        // Add user message
         const userMessage = {
           type: 'user_message' as const,
           message: {
             role: 'user',
-            content: result.text.trim()
+            content: userText
           },
           models: {
-            prosody: {
-              scores: {} // You would get this from your prosody analysis
+            emotion: {
+              scores: emotions
             }
           }
         };
-        
         setMessages(prev => [...prev, userMessage]);
-        onMessage?.(result.text.trim());
+        onMessage?.(userText);
         
-        // Simulate assistant response after user message
-        setTimeout(() => {
-          const assistantMessage = {
-            type: 'assistant_message' as const,
-            message: {
-              role: 'assistant',
-              content: 'I heard what you said. How can I help you with that?'
-            },
-            models: {
-              prosody: {
-                scores: {}
-              }
+        // Get and add assistant response
+        const assistantResponse = await getAssistantResponse(userText, emotions);
+        const assistantEmotions = await analyzeEmotion(assistantResponse);
+        
+        const assistantMessage = {
+          type: 'assistant_message' as const,
+          message: {
+            role: 'assistant',
+            content: assistantResponse
+          },
+          models: {
+            emotion: {
+              scores: assistantEmotions
             }
-          };
-          setMessages(prev => [...prev, assistantMessage]);
-        }, 1000);
+          }
+        };
+        setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
-      console.error('Error sending audio:', error);
+      console.error('Error processing audio:', error);
       onError?.(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsProcessing(false);
