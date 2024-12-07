@@ -2,10 +2,5 @@
   "version": 2,
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "env": {
-    "HUME_API_KEY": "4W1YctBwmqxnO9KhYfLPb043d24fyEEr4qKkYODvCeE1AFdawjcMsflWp6ZCfMGm",
-    "HUME_SECRET_KEY": "886Gh7Lo4KPBGTj8YSGpEJz2GGGiCXs7TUg5Oyf8iOCftTDW",
-    "NEXT_PUBLIC_HUME_CONFIG_ID": "115ffc86-e6dd-47b3-a134-139176876030"
-  }
+  "framework": "nextjs"
 } 
