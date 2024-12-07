@@ -4,13 +4,18 @@ import { useVoice } from "@humeai/voice-react";
 import Expressions from "./Expressions";
 import { AnimatePresence, motion } from "framer-motion";
 import { ComponentRef, forwardRef } from "react";
-import { UserCircle2, Stethoscope } from "lucide-react";
 
 const Messages = forwardRef<
   ComponentRef<typeof motion.div>,
   Record<never, never>
 >(function Messages(_, ref) {
   const { messages } = useVoice();
+
+  const getRoleName = (role: string) => {
+    if (role === "assistant") return "Dr. Ly's AI";
+    if (role === "user") return "Patient";
+    return role;
+  };
 
   return (
     <motion.div
@@ -27,14 +32,16 @@ const Messages = forwardRef<
               msg.type === "user_message" ||
               msg.type === "assistant_message"
             ) {
-              const isUser = msg.type === "user_message";
               return (
                 <motion.div
                   key={msg.type + index}
                   className={cn(
-                    "w-[85%] md:w-[80%]",
-                    "flex gap-3",
-                    isUser ? "ml-auto flex-row-reverse" : ""
+                    "w-[80%]",
+                    "bg-card shadow-sm",
+                    "border border-blue-100 rounded-2xl",
+                    msg.type === "user_message" 
+                      ? "ml-auto bg-blue-50" 
+                      : "bg-white"
                   )}
                   initial={{
                     opacity: 0,
@@ -49,37 +56,20 @@ const Messages = forwardRef<
                     y: 0,
                   }}
                 >
-                  <div className="flex-shrink-0 mt-1">
-                    {isUser ? (
-                      <UserCircle2 className="w-8 h-8 text-primary/60" />
-                    ) : (
-                      <div className="rounded-full bg-primary/10 p-1.5">
-                        <Stethoscope className="w-5 h-5 text-primary" />
-                      </div>
-                    )}
-                  </div>
                   <div
                     className={cn(
-                      "flex-1 bg-card border rounded-2xl shadow-sm",
-                      isUser ? "border-primary/20" : "border-primary/10",
-                      "overflow-hidden"
+                      "text-sm font-medium leading-none pt-4 px-4",
+                      msg.type === "user_message" 
+                        ? "text-blue-700" 
+                        : "text-blue-600"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "text-xs font-medium leading-none pt-3 px-4",
-                        isUser ? "text-primary/60" : "text-primary/50"
-                      )}
-                    >
-                      {isUser ? "Patient" : "Dr. Ly's Assistant"}
-                    </div>
-                    <div className={"py-2 px-4 text-foreground/90"}>
-                      {msg.message.content}
-                    </div>
-                    <div className="px-4 pb-2">
-                      <Expressions values={{ ...msg.models.prosody?.scores }} />
-                    </div>
+                    {getRoleName(msg.message.role)}
                   </div>
+                  <div className={"pb-3 px-4 mt-2 text-gray-700"}>
+                    {msg.message.content}
+                  </div>
+                  <Expressions values={{ ...msg.models.prosody?.scores }} />
                 </motion.div>
               );
             }
