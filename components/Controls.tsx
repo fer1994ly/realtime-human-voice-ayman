@@ -60,20 +60,29 @@ export default function Controls() {
             </div>
 
             <Button
-              className={"flex items-center gap-2 px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 text-base font-semibold",
+                "bg-red-600 hover:bg-red-700 active:bg-red-800",
+                "text-white",
+                "transform transition-all duration-200",
+                "shadow-lg hover:shadow-xl active:shadow-md",
+                "scale-100 hover:scale-105 active:scale-95",
+                "rounded-xl",
+                "focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600 disabled:hover:scale-100"
+              )}
               onClick={() => {
                 disconnect();
               }}
-              variant={"destructive"}
             >
-              <span>
+              <span className="relative">
                 <Phone
-                  className={"size-5 opacity-80"}
+                  className={"size-5 transition-transform group-active:scale-90"}
                   strokeWidth={2.5}
                   stroke={"currentColor"}
                 />
               </span>
-              <span>End Consultation</span>
+              <span className="relative inline-block">End Consultation</span>
             </Button>
           </motion.div>
         ) : null}
