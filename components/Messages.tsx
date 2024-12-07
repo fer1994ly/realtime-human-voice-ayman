@@ -9,7 +9,7 @@ const Messages = forwardRef<
   ComponentRef<typeof motion.div>,
   Record<never, never>
 >(function Messages(_, ref) {
-  const { messages } = useVoice();
+  const { messages, isProcessing } = useVoice();
 
   return (
     <motion.div
@@ -60,9 +60,21 @@ const Messages = forwardRef<
                 </motion.div>
               );
             }
-
             return null;
           })}
+          
+          {isProcessing && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-[80%] bg-card/50 border border-border rounded p-3 flex items-center gap-2"
+            >
+              <div className="animate-pulse w-2 h-2 bg-primary rounded-full" />
+              <div className="animate-pulse w-2 h-2 bg-primary rounded-full animation-delay-200" />
+              <div className="animate-pulse w-2 h-2 bg-primary rounded-full animation-delay-400" />
+            </motion.div>
+          )}
         </AnimatePresence>
       </motion.div>
     </motion.div>
