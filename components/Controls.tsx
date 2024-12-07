@@ -6,9 +6,32 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Toggle } from "./ui/toggle";
 import MicFFT from "./MicFFT";
 import { cn } from "@/utils";
+import { useState } from "react";
 
 export default function Controls() {
   const { disconnect, status, isMuted, unmute, mute, micFft } = useVoice();
+  const [isEnding, setIsEnding] = useState(false);
+
+  const handleEndCall = async () => {
+    setIsEnding(true);
+    try {
+      // Clean up audio resources
+      if (window.activeStream) {
+        window.activeStream.getTracks().forEach(track => track.stop());
+        window.activeStream = null;
+      }
+      if (window.activeAudioContext) {
+        await window.activeAudioContext.close();
+        window.activeAudioContext = null;
+      }
+      // Disconnect from voice service
+      await disconnect();
+    } catch (error) {
+      console.error('Error ending call:', error);
+    } finally {
+      setIsEnding(false);
+    }
+  };
 
   return (
     <div
@@ -71,9 +94,8 @@ export default function Controls() {
                 "focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
                 "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600 disabled:hover:scale-100"
               )}
-              onClick={() => {
-                disconnect();
-              }}
+              onClick={handleEndCall}
+              disabled={isEnding}
             >
               <span className="relative">
                 <Phone
@@ -82,7 +104,9 @@ export default function Controls() {
                   stroke={"currentColor"}
                 />
               </span>
-              <span className="relative inline-block">End Consultation</span>
+              <span className="relative inline-block">
+                {isEnding ? "Ending..." : "End Consultation"}
+              </span>
             </Button>
           </motion.div>
         ) : null}
