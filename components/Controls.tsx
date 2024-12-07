@@ -1,5 +1,5 @@
 "use client";
-import { useVoice } from "@humeai/voice-react";
+import { useVoice } from "./VoiceProvider";
 import { Button } from "./ui/button";
 import { Mic, MicOff, Phone } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";

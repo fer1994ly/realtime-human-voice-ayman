@@ -1,4 +1,17 @@
-import React, { createContext, useContext, useCallback, useState } from 'react';
+import React, { createContext, useContext, useCallback, useState, useRef } from 'react';
+
+type Message = {
+  type: 'user_message' | 'assistant_message';
+  message: {
+    role: string;
+    content: string;
+  };
+  models: {
+    prosody?: {
+      scores: Record<string, number>;
+    };
+  };
+};
 
 type VoiceContextType = {
   status: {
@@ -7,6 +20,11 @@ type VoiceContextType = {
   connect: () => Promise<void>;
   disconnect: () => void;
   sendAudio: (audioData: Float32Array) => Promise<void>;
+  isMuted: boolean;
+  mute: () => void;
+  unmute: () => void;
+  micFft: number[];
+  messages: Message[];
 };
 
 const VoiceContext = createContext<VoiceContextType | null>(null);
@@ -31,10 +49,66 @@ type VoiceProviderProps = {
 
 export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProviderProps) {
   const [status, setStatus] = useState<VoiceContextType['status']>({ value: 'disconnected' });
+  const [isMuted, setIsMuted] = useState(false);
+  const [micFft, setMicFft] = useState<number[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
 
   const connect = useCallback(async () => {
     try {
       setStatus({ value: 'connecting' });
+
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000
+        } 
+      });
+
+      // Create and configure AudioContext
+      const audioContext = new AudioContext({
+        sampleRate: 16000,
+        latencyHint: 'interactive'
+      });
+      window.activeAudioContext = audioContext;
+
+      // Create audio source from stream
+      const source = audioContext.createMediaStreamSource(stream);
+
+      // Create analyser for FFT
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.5;
+      analyserRef.current = analyser;
+
+      // Create processor node
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      // Connect nodes
+      source.connect(analyser);
+      analyser.connect(processor);
+      processor.connect(audioContext.destination);
+
+      // Set up FFT visualization
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateFFT = () => {
+        if (status.value === 'connected') {
+          analyser.getByteFrequencyData(dataArray);
+          const fftData = Array.from(dataArray).map(val => val / 255);
+          setMicFft(fftData);
+          requestAnimationFrame(updateFFT);
+        }
+      };
+      updateFFT();
+
+      // Store stream for later cleanup
+      window.activeStream = stream;
+      
       setStatus({ value: 'connected' });
     } catch (error) {
       console.error('Connection error:', error);
@@ -44,6 +118,20 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
   }, [onError]);
 
   const disconnect = useCallback(() => {
+    // Stop FFT visualization
+    setMicFft([]);
+
+    // Cleanup audio nodes
+    if (analyserRef.current) {
+      analyserRef.current.disconnect();
+      analyserRef.current = null;
+    }
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+
+    // Cleanup stream and context
     if (window.activeStream) {
       window.activeStream.getTracks().forEach(track => track.stop());
       window.activeStream = null;
@@ -52,7 +140,26 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       window.activeAudioContext.close();
       window.activeAudioContext = null;
     }
+
     setStatus({ value: 'disconnected' });
+  }, []);
+
+  const mute = useCallback(() => {
+    setIsMuted(true);
+    if (window.activeStream) {
+      window.activeStream.getAudioTracks().forEach(track => {
+        track.enabled = false;
+      });
+    }
+  }, []);
+
+  const unmute = useCallback(() => {
+    setIsMuted(false);
+    if (window.activeStream) {
+      window.activeStream.getAudioTracks().forEach(track => {
+        track.enabled = true;
+      });
+    }
   }, []);
 
   const sendAudio = useCallback(async (audioData: Float32Array) => {
@@ -72,17 +179,21 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
         }
       };
       
+      const numChannels = 1;
+      const sampleRate = 16000;
+      const bytesPerSample = 2;
+      
       writeString(0, 'RIFF');
       view.setUint32(4, 32 + audioData.length * 2, true);
       writeString(8, 'WAVE');
       writeString(12, 'fmt ');
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true);
-      view.setUint16(22, 1, true);
-      view.setUint32(24, 16000, true);
-      view.setUint32(28, 32000, true);
-      view.setUint16(32, 2, true);
-      view.setUint16(34, 16, true);
+      view.setUint32(16, 16, true);                                    // Subchunk1Size
+      view.setUint16(20, 1, true);                                     // AudioFormat (PCM)
+      view.setUint16(22, numChannels, true);                          // NumChannels
+      view.setUint32(24, sampleRate, true);                           // SampleRate
+      view.setUint32(28, sampleRate * numChannels * bytesPerSample, true); // ByteRate
+      view.setUint16(32, numChannels * bytesPerSample, true);         // BlockAlign
+      view.setUint16(34, bytesPerSample * 8, true);                   // BitsPerSample
       writeString(36, 'data');
       view.setUint32(40, audioData.length * 2, true);
       
@@ -113,8 +224,21 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
       const result = await response.json();
       
       if (result.text && result.text.trim()) {
+        setMessages(prev => [...prev, {
+          type: 'user_message',
+          message: {
+            role: 'user',
+            content: result.text.trim()
+          },
+          models: {
+            prosody: {
+              scores: {} // You would get this from your prosody analysis
+            }
+          }
+        }]);
         onMessage?.(result.text.trim());
       }
+
     } catch (error) {
       console.error('Error sending audio:', error);
       onError?.(error instanceof Error ? error : new Error(String(error)));
@@ -122,7 +246,17 @@ export function VoiceProvider({ children, auth, onMessage, onError }: VoiceProvi
   }, [status.value, auth.value, onMessage, onError]);
 
   return (
-    <VoiceContext.Provider value={{ status, connect, disconnect, sendAudio }}>
+    <VoiceContext.Provider value={{ 
+      status, 
+      connect, 
+      disconnect, 
+      sendAudio,
+      isMuted,
+      mute,
+      unmute,
+      micFft,
+      messages
+    }}>
       {children}
     </VoiceContext.Provider>
   );
