@@ -17,7 +17,7 @@ export const metadata: Metadata = {
       {
         url: "blob:https://og-playground.vercel.app/9b0e9c16-fd83-4138-ae9a-a272f8198a35",
         width: 1200,
-        height: 630,
+        height: 300,
         alt: "AI Health Assistance - Your Personal Health Companion",
       },
     ],
@@ -44,7 +44,7 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
         <meta property="og:image" content="blob:https://og-playground.vercel.app/9b0e9c16-fd83-4138-ae9a-a272f8198a35" />
         <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
+        <meta property="og:image:height" content="300" />
         <meta property="og:image:alt" content="AI Health Assistance - Your Personal Health Companion" />
         
         <meta name="twitter:card" content="summary_large_image" />
