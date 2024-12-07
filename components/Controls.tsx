@@ -29,11 +29,11 @@ export default function Controls() {
 
       window.location.replace(window.location.href);
       setTimeout(() => {
-        window.location.reload(true);
+        window.location.reload();
       }, 100);
     } catch (error) {
       console.error('Error ending call:', error);
-      window.location.reload(true);
+      window.location.reload();
     }
   }, [disconnect]);
 
@@ -42,6 +42,7 @@ export default function Controls() {
       className={cn(
         "fixed bottom-0 left-0 w-full md:p-6 p-4 flex items-center justify-center",
         "bg-gradient-to-t from-blue-50 via-blue-50/90 to-transparent",
+        "z-50"
       )}
     >
       <AnimatePresence>
@@ -53,7 +54,7 @@ export default function Controls() {
             className={cn(
               "p-4 md:p-6 bg-white border border-blue-100 rounded-2xl shadow-lg",
               "flex flex-col md:flex-row items-center gap-4 md:gap-6",
-              "max-w-3xl w-full mx-auto"
+              "max-w-3xl w-full mx-auto backdrop-blur-sm bg-white/90"
             )}
           >
             <div className="flex items-center gap-4 w-full md:w-auto">
@@ -68,10 +69,11 @@ export default function Controls() {
                 }}
                 className={cn(
                   "h-12 w-12 md:h-14 md:w-14 rounded-xl",
-                  "bg-blue-50 hover:bg-blue-100",
+                  "bg-blue-50 hover:bg-blue-100 data-[state=on]:bg-blue-100",
                   "border-2 border-blue-200",
-                  "transition-all duration-200"
+                  "transition-all duration-200 shadow-sm"
                 )}
+                aria-label="Toggle microphone"
               >
                 {isMuted ? (
                   <MicOff className="size-5 md:size-6 text-blue-600" />
@@ -81,7 +83,7 @@ export default function Controls() {
               </Toggle>
 
               <div className="flex-1 md:w-48">
-                <div className="text-sm text-blue-600 font-medium mb-1">Voice Level</div>
+                <div className="text-sm text-blue-600 font-medium mb-1">Patient Voice Activity</div>
                 <div className="relative h-8 w-full">
                   <MicFFT fft={micFft} className="fill-blue-400" />
                 </div>
@@ -92,23 +94,24 @@ export default function Controls() {
               className={cn(
                 "flex items-center gap-3 px-6 py-4 w-full md:w-auto",
                 "text-base md:text-lg font-medium",
-                "bg-blue-50 hover:bg-blue-100 text-blue-700",
-                "border-2 border-blue-200",
+                "bg-red-50 hover:bg-red-100 text-red-600",
+                "border-2 border-red-200",
                 "transform transition-all duration-200",
                 "rounded-xl md:rounded-2xl",
-                "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "shadow-sm hover:shadow-md"
               )}
               onClick={handleEndCall}
               disabled={isEnding}
             >
-              <Phone 
+              <Heart 
                 className={cn(
                   "size-5 md:size-6",
-                  "text-blue-600"
+                  "animate-pulse text-red-500"
                 )}
               />
-              <span className="relative inline-block">
+              <span className="relative inline-block whitespace-nowrap">
                 {isEnding ? "Ending Consultation..." : "End Consultation"}
               </span>
             </Button>

@@ -11,12 +11,6 @@ const Messages = forwardRef<
 >(function Messages(_, ref) {
   const { messages } = useVoice();
 
-  const getRoleName = (role: string) => {
-    if (role === "assistant") return "Dr. Ly's AI";
-    if (role === "user") return "Patient";
-    return role;
-  };
-
   return (
     <motion.div
       layoutScroll
@@ -32,16 +26,16 @@ const Messages = forwardRef<
               msg.type === "user_message" ||
               msg.type === "assistant_message"
             ) {
+              const isUser = msg.type === "user_message";
               return (
                 <motion.div
                   key={msg.type + index}
                   className={cn(
-                    "w-[80%]",
-                    "bg-card shadow-sm",
-                    "border border-blue-100 rounded-2xl",
-                    msg.type === "user_message" 
-                      ? "ml-auto bg-blue-50" 
-                      : "bg-white"
+                    "w-[85%] md:w-[80%]",
+                    "bg-card",
+                    "border border-border rounded-2xl shadow-sm",
+                    "transition-all duration-200",
+                    isUser ? "ml-auto bg-blue-50" : "bg-white"
                   )}
                   initial={{
                     opacity: 0,
@@ -58,21 +52,18 @@ const Messages = forwardRef<
                 >
                   <div
                     className={cn(
-                      "text-sm font-medium leading-none pt-4 px-4",
-                      msg.type === "user_message" 
-                        ? "text-blue-700" 
-                        : "text-blue-600"
+                      "text-xs capitalize font-medium leading-none pt-4 px-4",
+                      isUser ? "text-blue-600/70" : "text-gray-600/70"
                     )}
                   >
-                    {getRoleName(msg.message.role)}
+                    {isUser ? "Patient" : "Medical Assistant"}
                   </div>
-                  <div className={"pb-3 px-4 mt-2 text-gray-700"}>
-                    {msg.message.content}
-                  </div>
+                  <div className={"py-3 px-4 text-base"}>{msg.message.content}</div>
                   <Expressions values={{ ...msg.models.prosody?.scores }} />
                 </motion.div>
               );
             }
+
             return null;
           })}
         </AnimatePresence>
