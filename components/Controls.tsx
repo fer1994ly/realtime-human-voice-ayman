@@ -6,18 +6,35 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Toggle } from "./ui/toggle";
 import MicFFT from "./MicFFT";
 import { cn } from "@/utils";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Controls() {
   const { disconnect, status, isMuted, unmute, mute, micFft } = useVoice();
   const [isEnding, setIsEnding] = useState(false);
+  const router = useRouter();
 
-  const handleEndCall = async () => {
-    setIsEnding(true);
-    await disconnect();
-    // Reset the state after disconnection
-    window.location.reload();
-  };
+  const handleEndCall = useCallback(async () => {
+    try {
+      setIsEnding(true);
+      await disconnect();
+      
+      // Clean up any active media streams
+      if (window.activeStream) {
+        window.activeStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Clean up audio context
+      if (window.activeAudioContext) {
+        await window.activeAudioContext.close();
+      }
+
+      // Force a hard refresh of the page
+      window.location.href = window.location.href;
+    } catch (error) {
+      console.error('Error ending call:', error);
+    }
+  }, [disconnect]);
 
   return (
     <div
