@@ -14,33 +14,17 @@ export default function Controls() {
 
   const handleEndCall = async () => {
     setIsEnding(true);
-    try {
-      // Clean up audio resources
-      if (window.activeStream) {
-        window.activeStream.getTracks().forEach(track => track.stop());
-        window.activeStream = null;
-      }
-      if (window.activeAudioContext) {
-        await window.activeAudioContext.close();
-        window.activeAudioContext = null;
-      }
-      // Disconnect from voice service
-      await disconnect();
-    } catch (error) {
-      console.error('Error ending call:', error);
-    } finally {
-      setIsEnding(false);
-    }
+    await disconnect();
+    // Reset the state after disconnection
+    window.location.reload();
   };
 
   return (
     <div
-      className={
-        cn(
-          "fixed bottom-0 left-0 w-full p-4 flex items-center justify-center",
-          "bg-gradient-to-t from-card via-card/90 to-card/0",
-        )
-      }
+      className={cn(
+        "fixed bottom-0 left-0 w-full p-4 flex items-center justify-center",
+        "bg-gradient-to-t from-card via-card/90 to-card/0",
+      )}
     >
       <AnimatePresence>
         {status.value === "connected" ? (
