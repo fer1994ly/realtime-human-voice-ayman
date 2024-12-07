@@ -1,33 +1,64 @@
-import { useVoice } from "@humeai/voice-react";
+import { useVoice } from "./VoiceProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Phone } from "lucide-react";
 import { useState, useCallback, useRef, useEffect } from "react";
 
 export default function StartCall() {
-  const { status, connect } = useVoice();
+  const { status, connect, disconnect, sendAudio } = useVoice();
   const [error, setError] = useState<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const audioChunksRef = useRef<Float32Array[]>([]);
 
   const initializeAudio = async (stream: MediaStream) => {
     try {
       // Create AudioContext
-      const audioContext = new AudioContext();
+      const audioContext = new AudioContext({
+        sampleRate: 16000, // Required for Whisper
+        latencyHint: 'interactive'
+      });
       audioContextRef.current = audioContext;
       window.activeAudioContext = audioContext;
 
       // Create source from stream
       const source = audioContext.createMediaStreamSource(stream);
 
-      // Create and connect AudioWorkletNode
-      await audioContext.audioWorklet.addModule('/audioProcessor.js');
-      const workletNode = new AudioWorkletNode(audioContext, 'audio-processor');
-      workletNodeRef.current = workletNode;
+      // Create ScriptProcessor for audio processing
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+      
+      processor.onaudioprocess = async (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        audioChunksRef.current.push(new Float32Array(inputData));
+        
+        // When we have enough data (about 1 second), send it
+        if (audioChunksRef.current.length >= Math.ceil(audioContext.sampleRate / 4096)) {
+          // Concatenate chunks
+          const totalLength = audioChunksRef.current.reduce((acc, chunk) => acc + chunk.length, 0);
+          const concatenated = new Float32Array(totalLength);
+          let offset = 0;
+          
+          audioChunksRef.current.forEach(chunk => {
+            concatenated.set(chunk, offset);
+            offset += chunk.length;
+          });
+          
+          // Send to Hugging Face
+          try {
+            await sendAudio(concatenated);
+          } catch (err) {
+            console.error('Error sending audio:', err);
+          }
+          
+          // Clear chunks
+          audioChunksRef.current = [];
+        }
+      };
 
       // Connect the nodes
-      source.connect(workletNode);
-      workletNode.connect(audioContext.destination);
+      source.connect(processor);
+      processor.connect(audioContext.destination);
 
       return audioContext;
     } catch (err) {
@@ -45,14 +76,15 @@ export default function StartCall() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: 16000 // Required for Whisper
         } 
       });
       
       // Initialize audio processing
       await initializeAudio(stream);
       
-      // Connect to voice service
+      // Connect
       await connect();
       
       // Keep the stream active
@@ -64,14 +96,15 @@ export default function StartCall() {
       // Clean up any existing stream and audio context
       if (window.activeStream) {
         window.activeStream.getTracks().forEach(track => track.stop());
+        window.activeStream = null;
       }
       if (audioContextRef.current) {
         await audioContextRef.current.close();
         audioContextRef.current = null;
       }
-      if (workletNodeRef.current) {
-        workletNodeRef.current.disconnect();
-        workletNodeRef.current = null;
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
       }
     }
   }, [connect]);
@@ -79,17 +112,10 @@ export default function StartCall() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (window.activeStream) {
-        window.activeStream.getTracks().forEach(track => track.stop());
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (workletNodeRef.current) {
-        workletNodeRef.current.disconnect();
-      }
+      disconnect();
+      audioChunksRef.current = [];
     };
-  }, []);
+  }, [disconnect]);
 
   return (
     <AnimatePresence>

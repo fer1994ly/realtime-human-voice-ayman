@@ -1,12 +1,12 @@
 "use client";
 
-import { VoiceProvider } from "@humeai/voice-react";
+import { VoiceProvider } from "./VoiceProvider";
 import Messages from "./Messages";
 import Controls from "./Controls";
 import StartCall from "./StartCall";
 import { ComponentRef, useRef, useEffect } from "react";
 
-export default function ClientComponent({
+export default function Chat({
   accessToken,
 }: {
   accessToken: string;
@@ -14,9 +14,6 @@ export default function ClientComponent({
   const timeout = useRef<number | null>(null);
   const ref = useRef<ComponentRef<typeof Messages> | null>(null);
 
-  // optional: use configId from environment variable
-  const configId = process.env['NEXT_PUBLIC_HUME_CONFIG_ID'];
-  
   // Cleanup function for media streams
   useEffect(() => {
     // Resume audio context if it was suspended
@@ -46,14 +43,9 @@ export default function ClientComponent({
   }, []);
 
   return (
-    <div
-      className={
-        "relative grow flex flex-col mx-auto w-full overflow-hidden h-[0px]"
-      }
-    >
+    <div className={"relative grow flex flex-col mx-auto w-full overflow-hidden h-[0px]"}>
       <VoiceProvider
         auth={{ type: "accessToken", value: accessToken }}
-        configId={configId}
         onMessage={() => {
           if (timeout.current) {
             window.clearTimeout(timeout.current);
