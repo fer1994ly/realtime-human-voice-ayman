@@ -60,7 +60,7 @@ export default function Controls() {
             </div>
 
             <Button
-              className={"flex items-center gap-1"}
+              className={"flex items-center gap-2 px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"}
               onClick={() => {
                 disconnect();
               }}
@@ -68,12 +68,12 @@ export default function Controls() {
             >
               <span>
                 <Phone
-                  className={"size-4 opacity-50"}
-                  strokeWidth={2}
+                  className={"size-5 opacity-80"}
+                  strokeWidth={2.5}
                   stroke={"currentColor"}
                 />
               </span>
-              <span>End Call</span>
+              <span>End Consultation</span>
             </Button>
           </motion.div>
         ) : null}
