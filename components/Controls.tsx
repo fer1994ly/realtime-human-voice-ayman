@@ -1,7 +1,7 @@
 "use client";
 import { useVoice } from "@humeai/voice-react";
 import { Button } from "./ui/button";
-import { Mic, MicOff, Phone } from "lucide-react";
+import { Mic, MicOff, Heart } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Toggle } from "./ui/toggle";
 import MicFFT from "./MicFFT";
@@ -37,81 +37,76 @@ export default function Controls() {
   }, [disconnect]);
 
   return (
-    <div
-      className={cn(
-        "fixed bottom-0 left-0 w-full p-4 flex items-center justify-center",
-        "bg-gradient-to-t from-card via-card/90 to-card/0",
-      )}
-    >
-      <AnimatePresence>
-        {status.value === "connected" ? (
-          <motion.div
-            initial={{
-              y: "100%",
-              opacity: 0,
+    <AnimatePresence mode={"wait"}>
+      <motion.div
+        className={cn(
+          "fixed bottom-0 left-0 right-0",
+          "flex items-center justify-center",
+          "p-4 pb-8 bg-gradient-to-t from-white to-transparent dark:from-gray-900"
+        )}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-4",
+            "p-4 rounded-2xl",
+            "bg-white dark:bg-gray-800",
+            "shadow-lg shadow-teal-500/10",
+            "border border-teal-100 dark:border-teal-900"
+          )}
+        >
+          <Toggle
+            pressed={!isMuted}
+            onPressedChange={() => {
+              if (isMuted) {
+                unmute();
+              } else {
+                mute();
+              }
             }}
-            animate={{
-              y: 0,
-              opacity: 1,
-            }}
-            exit={{
-              y: "100%",
-              opacity: 0,
-            }}
-            className={
-              "p-4 bg-card border border-border rounded-lg shadow-sm flex items-center gap-4"
-            }
+            className="bg-teal-50 hover:bg-teal-100 dark:bg-teal-900/50 dark:hover:bg-teal-900"
           >
-            <Toggle
-              pressed={!isMuted}
-              onPressedChange={() => {
-                if (isMuted) {
-                  unmute();
-                } else {
-                  mute();
-                }
-              }}
-            >
-              {isMuted ? (
-                <MicOff className={"size-4"} />
-              ) : (
-                <Mic className={"size-4"} />
-              )}
-            </Toggle>
+            {isMuted ? (
+              <MicOff className={"size-4 text-teal-600 dark:text-teal-400"} />
+            ) : (
+              <Mic className={"size-4 text-teal-600 dark:text-teal-400"} />
+            )}
+          </Toggle>
 
-            <div className={"relative grid h-8 w-48 shrink grow-0"}>
-              <MicFFT fft={micFft} className={"fill-current"} />
-            </div>
+          <div className={"relative grid h-8 w-48 shrink grow-0"}>
+            <MicFFT fft={micFft} className={"fill-teal-500/20"} />
+          </div>
 
-            <Button
-              className={cn(
-                "flex items-center gap-2 px-6 py-3 text-base font-semibold",
-                "bg-red-600 hover:bg-red-700 active:bg-red-800",
-                "text-white",
-                "transform transition-all duration-200",
-                "shadow-lg hover:shadow-xl active:shadow-md",
-                "scale-100 hover:scale-105 active:scale-95",
-                "rounded-xl",
-                "focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600 disabled:hover:scale-100"
-              )}
-              onClick={handleEndCall}
-              disabled={isEnding}
-            >
-              <span className="relative">
-                <Phone
-                  className={"size-5 transition-transform group-active:scale-90"}
-                  strokeWidth={2.5}
-                  stroke={"currentColor"}
-                />
-              </span>
-              <span className="relative inline-block">
-                {isEnding ? "Ending..." : "End Consultation"}
-              </span>
-            </Button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+          <Button
+            className={cn(
+              "flex items-center gap-2 px-6 py-3 text-base font-semibold",
+              "bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600",
+              "text-white",
+              "transform transition-all duration-200",
+              "shadow-lg hover:shadow-xl active:shadow-md",
+              "scale-100 hover:scale-105 active:scale-95",
+              "rounded-xl",
+              "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            )}
+            onClick={handleEndCall}
+            disabled={isEnding}
+          >
+            <span className="relative">
+              <Heart
+                className={"size-5 transition-transform group-active:scale-90"}
+                strokeWidth={2.5}
+                stroke={"currentColor"}
+              />
+            </span>
+            <span className="relative inline-block">
+              {isEnding ? "Ending..." : "End Consultation"}
+            </span>
+          </Button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

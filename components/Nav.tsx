@@ -1,11 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useState } from "react";
-import HumeLogo from "./logos/Hume";
+import HealthAILogo from "./logos/Hume";
 import { Button } from "./ui/button";
-import { Moon, Sun } from "lucide-react";
-import Github from "./logos/GitHub";
-import pkg from '@/package.json';
+import { Moon, Sun, Heart } from "lucide-react";
 
 export const Nav = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -29,40 +27,27 @@ export const Nav = () => {
   return (
     <div
       className={
-        "px-4 py-2 flex items-center h-14 z-50 bg-card border-b border-border"
+        "px-6 py-3 flex items-center h-16 z-50 bg-gradient-to-r from-teal-50 to-blue-50 border-b border-teal-100 shadow-sm"
       }
     >
-      <div>
-        <HumeLogo className={"h-5 w-auto"} />
+      <div className="flex items-center gap-2">
+        <HealthAILogo className={"h-8 w-auto"} />
+        <Heart className="h-5 w-5 text-teal-500 animate-pulse" />
       </div>
-      <div className={"ml-auto flex items-center gap-1"}>
-        <Button
-          onClick={() => {
-            window.open(
-              pkg.homepage,
-              "_blank",
-              "noopener noreferrer"
-            );
-          }}
-          variant={"ghost"}
-          className={"ml-auto flex items-center gap-1.5"}
-        >
-          
-          <span></span>
-        </Button>
+      <div className={"ml-auto flex items-center gap-3"}>
         <Button
           onClick={toggleDark}
-          variant={"ghost"}
-          className={"ml-auto flex items-center gap-1.5"}
+          variant={"outline"}
+          className={"flex items-center gap-2 border-teal-200 hover:border-teal-300 hover:bg-teal-50"}
         >
           <span>
             {isDarkMode ? (
-              <Sun className={"size-4"} />
+              <Sun className={"size-4 text-amber-500"} />
             ) : (
-              <Moon className={"size-4"} />
+              <Moon className={"size-4 text-blue-500"} />
             )}
           </span>
-          <span>{isDarkMode ? "Light" : "Dark"}</span>
+          <span className="text-gray-700">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
         </Button>
       </div>
     </div>

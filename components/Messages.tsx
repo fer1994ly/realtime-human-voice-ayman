@@ -4,6 +4,7 @@ import { useVoice } from "@humeai/voice-react";
 import Expressions from "./Expressions";
 import { AnimatePresence, motion } from "framer-motion";
 import { ComponentRef, forwardRef } from "react";
+import { User, Bot } from "lucide-react";
 
 const Messages = forwardRef<
   ComponentRef<typeof motion.div>,
@@ -14,7 +15,7 @@ const Messages = forwardRef<
   return (
     <motion.div
       layoutScroll
-      className={"grow rounded-md overflow-auto p-4"}
+      className={"grow rounded-md overflow-auto p-4 bg-gradient-to-br from-teal-50/50 to-blue-50/50"}
       ref={ref}
     >
       <motion.div
@@ -31,31 +32,51 @@ const Messages = forwardRef<
                   key={msg.type + index}
                   className={cn(
                     "w-[80%]",
-                    "bg-card",
-                    "border border-border rounded",
-                    msg.type === "user_message" ? "ml-auto" : ""
+                    "p-4 backdrop-blur-sm",
+                    "border rounded-2xl shadow-sm",
+                    msg.type === "user_message" 
+                      ? "ml-auto bg-white/80 border-teal-100" 
+                      : "bg-blue-50/80 border-blue-100"
                   )}
                   initial={{
                     opacity: 0,
                     y: 10,
+                    scale: 0.95,
                   }}
                   animate={{
                     opacity: 1,
                     y: 0,
+                    scale: 1,
                   }}
                   exit={{
                     opacity: 0,
                     y: 0,
+                    scale: 0.95,
                   }}
                 >
-                  <div
-                    className={cn(
-                      "text-xs capitalize font-medium leading-none opacity-50 pt-4 px-3"
+                  <div className="flex items-center gap-2 mb-2">
+                    {msg.type === "user_message" ? (
+                      <User className="h-5 w-5 text-teal-500" />
+                    ) : (
+                      <Bot className="h-5 w-5 text-blue-500" />
                     )}
-                  >
-                    {msg.message.role}
+                    <div
+                      className={cn(
+                        "text-sm font-medium",
+                        msg.type === "user_message" 
+                          ? "text-teal-700" 
+                          : "text-blue-700"
+                      )}
+                    >
+                      {msg.type === "user_message" ? "You" : "Health AI"}
+                    </div>
                   </div>
-                  <div className={"pb-3 px-3"}>{msg.message.content}</div>
+                  <div className={cn(
+                    "text-gray-700 leading-relaxed",
+                    "prose prose-sm max-w-none"
+                  )}>
+                    {msg.message.content}
+                  </div>
                   <Expressions values={{ ...msg.models.prosody?.scores }} />
                 </motion.div>
               );
