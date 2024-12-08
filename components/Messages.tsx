@@ -25,7 +25,7 @@ const Messages = forwardRef<
   return (
     <motion.div
       layoutScroll
-      className={"grow rounded-md overflow-auto p-4 bg-gradient-to-br from-teal-50/50 to-blue-50/50"}
+      className={"grow overflow-auto p-4 bg-white"}
       ref={ref}
     >
       <motion.div
@@ -42,11 +42,11 @@ const Messages = forwardRef<
                   key={msg.type + index}
                   className={cn(
                     "w-[80%]",
-                    "p-4 backdrop-blur-sm",
+                    "p-4",
                     "border rounded-2xl shadow-sm",
                     msg.type === "user_message" 
-                      ? "ml-auto bg-white/80 border-teal-100" 
-                      : "bg-blue-50/80 border-blue-100"
+                      ? "ml-auto bg-teal-50 border-teal-200" 
+                      : "bg-blue-50 border-blue-200"
                   )}
                   initial={{
                     opacity: 0,
@@ -66,23 +66,23 @@ const Messages = forwardRef<
                 >
                   <div className="flex items-center gap-2 mb-2">
                     {msg.type === "user_message" ? (
-                      <User className="h-5 w-5 text-teal-500" />
+                      <User className="h-5 w-5 text-teal-600" />
                     ) : (
-                      <Bot className="h-5 w-5 text-blue-500" />
+                      <Bot className="h-5 w-5 text-blue-600" />
                     )}
                     <div
                       className={cn(
                         "text-sm font-medium",
                         msg.type === "user_message" 
-                          ? "text-teal-700" 
-                          : "text-blue-700"
+                          ? "text-teal-800" 
+                          : "text-blue-800"
                       )}
                     >
-                      {msg.type === "user_message" ? "You" : "Health AI"}
+                      {msg.type === "user_message" ? "You" : "Dr. Ly's AI Assistant"}
                     </div>
                   </div>
                   <div className={cn(
-                    "text-gray-700 leading-relaxed",
+                    "text-gray-800 leading-relaxed text-base",
                     "prose prose-sm max-w-none"
                   )}>
                     {msg.message.content}
