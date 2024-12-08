@@ -3,7 +3,7 @@ import { cn } from "@/utils";
 import { useVoice } from "@humeai/voice-react";
 import Expressions from "./Expressions";
 import { AnimatePresence, motion } from "framer-motion";
-import { ComponentRef, forwardRef } from "react";
+import { ComponentRef, forwardRef, useEffect } from "react";
 import { User, Bot } from "lucide-react";
 
 const Messages = forwardRef<
@@ -11,6 +11,16 @@ const Messages = forwardRef<
   Record<never, never>
 >(function Messages(_, ref) {
   const { messages } = useVoice();
+
+  useEffect(() => {
+    messages.forEach(msg => {
+      if (msg.type === "user_message") {
+        console.log("User:", msg.message.content);
+      } else if (msg.type === "assistant_message") {
+        console.log("AI Assistant:", msg.message.content);
+      }
+    });
+  }, [messages]);
 
   return (
     <motion.div
