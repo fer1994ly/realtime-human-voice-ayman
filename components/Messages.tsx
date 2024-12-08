@@ -25,11 +25,11 @@ const Messages = forwardRef<
   return (
     <motion.div
       layoutScroll
-      className={"grow overflow-auto p-4 bg-white"}
+      className={"grow overflow-auto p-4 bg-white h-[calc(100vh-200px)]"}
       ref={ref}
     >
       <motion.div
-        className={"max-w-2xl mx-auto w-full flex flex-col gap-4 pb-24"}
+        className={"max-w-2xl mx-auto w-full flex flex-col gap-4"}
       >
         <AnimatePresence mode={"popLayout"}>
           {messages.map((msg, index) => {
@@ -43,7 +43,8 @@ const Messages = forwardRef<
                   className={cn(
                     "w-[80%]",
                     "p-4",
-                    "border rounded-2xl shadow-sm",
+                    "border rounded-2xl",
+                    "shadow-md",
                     msg.type === "user_message" 
                       ? "ml-auto bg-teal-50 border-teal-200" 
                       : "bg-blue-50 border-blue-200"
@@ -64,7 +65,7 @@ const Messages = forwardRef<
                     scale: 0.95,
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     {msg.type === "user_message" ? (
                       <User className="h-5 w-5 text-teal-600" />
                     ) : (
@@ -72,22 +73,24 @@ const Messages = forwardRef<
                     )}
                     <div
                       className={cn(
-                        "text-sm font-medium",
+                        "text-base font-medium",
                         msg.type === "user_message" 
                           ? "text-teal-800" 
                           : "text-blue-800"
                       )}
                     >
-                      {msg.type === "user_message" ? "You" : "Dr. Ly's AI Assistant"}
+                      {msg.type === "user_message" ? "You" : "24-Hour Health Assistant"}
                     </div>
                   </div>
                   <div className={cn(
-                    "text-gray-800 leading-relaxed text-base",
+                    "text-gray-800 leading-relaxed text-base mb-3",
                     "prose prose-sm max-w-none"
                   )}>
                     {msg.message.content}
                   </div>
-                  <Expressions values={{ ...msg.models.prosody?.scores }} />
+                  <div className="mt-2 border-t border-gray-200 pt-2">
+                    <Expressions values={{ ...msg.models.prosody?.scores }} />
+                  </div>
                 </motion.div>
               );
             }
